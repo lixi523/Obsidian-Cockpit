@@ -7,10 +7,8 @@ on:
       - 'v*'
 
 jobs:
-  build-and-release:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,17 +25,37 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-plugin
+          path: dist-plugin/
+          retention-days: 7
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-plugin
+
       - name: Create Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          VERSION="${TAG#v}"
-          gh release create "$TAG" \
-            dist-plugin/main.js \
-            dist-plugin/styles.css \
-            dist-plugin/manifest.json \
-            dist-plugin/versions.json \
+          gh release create "$VERSION" \
+            main.js \
+            styles.css \
+            manifest.json \
+            versions.json \
             README.md \
-            --title "Knowledge Dashboard ${VERSION}" \
+            --title "Knowledge Dashboard $VERSION" \
             --notes "## 更新内容\n\n- 读取 Obsidian app.json 排除列表（exclude-folders / exclude-files）\n- 饼图目标文件夹可配置设置项\n- 子目录展开状态持久化（localStorage）\n- 饼图色板扩展至 20 色\n- 版本升级至 ${VERSION}"
