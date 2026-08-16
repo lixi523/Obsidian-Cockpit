@@ -1,0 +1,35 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${{ github.event.repository.default_branch == 'main' && '1.1.0' || '1.1.0' }}"
+          gh release create "$TAG" \
+            dist-plugin/main.js \
+            dist-plugin/styles.css \
+            dist-plugin/manifest.json \
+            dist-plugin/versions.json \
+            README.md \
+            --title "Knowledge Dashboard v1.1.0" \
+            --notes "## 更新内容\n\n- 读取 Obsidian app.json 排除列表（exclude-folders / exclude-files）\n- 饼图目标文件夹可配置设置项\n- 子目录展开状态持久化（localStorage）\n- 饼图色板扩展至 20 色\n- 版本升级至 1.1.0"
