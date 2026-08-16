@@ -1,0 +1,8 @@
+node_modules/
+dist-plugin/
+main.js
+.dashboard-preview.html
+.idea/
+.vscode/
+uploads/
+.reasonix/

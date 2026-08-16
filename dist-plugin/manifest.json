@@ -1,0 +1,10 @@
+{
+  "id": "knowledge-dashboard",
+  "name": "Knowledge Dashboard",
+  "version": "1.1.0",
+  "minAppVersion": "1.0.0",
+  "description": "Knowledge base dashboard - shows note counts by folder hierarchy (1st & 2nd level)",
+  "author": "User",
+  "authorUrl": "",
+  "isDesktopOnly": false
+}

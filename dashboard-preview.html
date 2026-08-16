@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Knowledge Dashboard Preview</title>
+<style>
+	/* === Obsidian Theme Simulation === */
+	:root {
+		--bg-primary: #1e1e1e;
+		--bg-secondary: #252526;
+		--bg-tertiary: #2a2d2e;
+		--bg-hover: #2a2d2e;
+		--bg-modifier-border: #3e3e42;
+		--bg-modifier-border-hover: #4a4a4e;
+		--text-normal: #cccccc;
+		--text-muted: #8a8a8a;
+		--text-faint: #5a5a5a;
+		--text-on-accent: #ffffff;
+		--interactive-accent: #7c3aed;
+		--interactive-accent-hover: #6d28d9;
+		--radius-s: 4px;
+		--radius-m: 6px;
+	}
+
+	* { margin: 0; padding: 0; box-sizing: border-box; }
+
+	body {
+		font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+		background: var(--bg-primary);
+		color: var(--text-normal);
+		line-height: 1.5;
+	}
+
+	/* --- Sidebar frame --- */
+	.page {
+		display: flex;
+		height: 100vh;
+	}
+
+	.sidebar-left {
+		width: 220px;
+		background: var(--bg-secondary);
+		border-right: 1px solid var(--bg-modifier-border);
+		padding: 12px 0;
+		flex-shrink: 0;
+	}
+
+	.sidebar-left .logo {
+		padding: 8px 16px 16px;
+		font-weight: 700;
+		font-size: 15px;
+		color: var(--text-normal);
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.sidebar-left .logo svg { opacity: 0.6; }
+
+	.sidebar-left .nav-item {
+		padding: 6px 16px;
+		font-size: 13px;
+		color: var(--text-muted);
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		border-radius: var(--radius-s);
+		margin: 1px 8px;
+	}
+
+	.sidebar-left .nav-item:hover { background: var(--bg-hover); color: var(--text-normal); }
+	.sidebar-left .nav-item.active { background: var(--bg-tertiary); color: var(--text-normal); font-weight: 600; }
+	.sidebar-left .nav-item .nav-icon { font-size: 14px; width: 18px; text-align: center; }
+
+	.main-area {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+	}
+
+	.main-header {
+		height: 36px;
+		background: var(--bg-secondary);
+		border-bottom: 1px solid var(--bg-modifier-border);
+		display: flex;
+		align-items: center;
+		padding: 0 16px;
+		font-size: 12px;
+		color: var(--text-muted);
+		gap: 12px;
+		flex-shrink: 0;
+	}
+
+	.tab {
+		padding: 4px 10px;
+		border-radius: var(--radius-s);
+		cursor: pointer;
+	}
+
+	.tab.active {
+		background: var(--bg-tertiary);
+		color: var(--text-normal);
+	}
+
+	.main-content {
+		flex: 1;
+		overflow-y: auto;
+	}
+
+	/* --- Dashboard Panel (right sidebar) --- */
+	.dashboard-panel {
+		width: 420px;
+		background: var(--bg-secondary);
+		border-left: 1px solid var(--bg-modifier-border);
+		flex-shrink: 0;
+		overflow-y: auto;
+	}
+
+	/* === Dashboard Content === */
+	.kd-content { padding: 16px; }
+
+	/* Header */
+	.kd-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 16px;
+		padding-bottom: 12px;
+		border-bottom: 1px solid var(--bg-modifier-border);
+	}
+
+	.kd-header h2 {
+		margin: 0;
+		font-size: 15px;
+		font-weight: 700;
+		letter-spacing: -0.01em;
+		color: var(--text-normal);
+	}
+
+	.kd-header-actions { display: flex; gap: 4px; }
+
+	.kd-header-actions button {
+		--button-size: 26px;
+		width: var(--button-size);
+		height: var(--button-size);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0;
+		border-radius: var(--radius-s);
+		background: transparent;
+		border: 1px solid transparent;
+		color: var(--text-muted);
+		cursor: pointer;
+		font-size: 15px;
+		transition: background 0.15s, color 0.15s, border-color 0.15s;
+	}
+
+	.kd-header-actions button:hover {
+		background: var(--bg-hover);
+		color: var(--text-normal);
+		border-color: var(--bg-modifier-border);
+	}
+
+	/* Stats Bar */
+	.kd-stats-bar {
+		display: flex;
+		gap: 8px;
+		flex-wrap: wrap;
+		margin-bottom: 16px;
+	}
+
+	.kd-stat-card {
+		flex: 1;
+		min-width: 100px;
+		padding: 10px 12px;
+		border-radius: var(--radius-m);
+		background: var(--bg-tertiary);
+		border: 1px solid transparent;
+		transition: border-color 0.15s;
+	}
+
+	.kd-stat-card:hover { border-color: var(--interactive-accent); }
+
+	.kd-stat-label {
+		display: block;
+		font-size: 10px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--text-faint);
+		margin-bottom: 2px;
+	}
+
+	.kd-stat-value {
+		display: block;
+		font-size: 22px;
+		font-weight: 700;
+		line-height: 1.15;
+		font-variant-numeric: tabular-nums;
+		color: var(--text-normal);
+	}
+
+	.kd-stat-value.accent { color: var(--interactive-accent); }
+
+	/* Table */
+	.kd-table-wrapper { overflow-x: auto; }
+
+	.kd-table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 12.5px;
+	}
+
+	.kd-table th {
+		text-align: left;
+		padding: 6px 10px;
+		border-bottom: 2px solid var(--bg-modifier-border);
+		color: var(--text-muted);
+		font-size: 10px;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		white-space: nowrap;
+		user-select: none;
+	}
+
+	.kd-table th:not(:first-child) { text-align: right; }
+
+	.kd-table td {
+		padding: 7px 10px;
+		border-bottom: 1px solid var(--bg-modifier-border-hover, var(--bg-modifier-border));
+		vertical-align: middle;
+	}
+
+	.kd-table td:not(:first-child) {
+		text-align: right;
+		font-variant-numeric: tabular-nums;
+		color: var(--text-muted);
+	}
+
+	.kd-folder-name {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		white-space: nowrap;
+	}
+
+	.kd-folder-icon {
+		flex-shrink: 0;
+		font-size: 14px;
+		opacity: 0.65;
+	}
+
+	.kd-folder-label {
+		flex: 1;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.kd-indent {
+		display: inline-block;
+		width: 20px;
+		flex-shrink: 0;
+	}
+
+	.kd-row-l0 > td:first-child .kd-folder-label {
+		font-weight: 700;
+		font-size: 12.5px;
+		color: var(--text-normal);
+	}
+
+	.kd-row-l0 > td:first-child .kd-folder-icon {
+		font-size: 15px;
+		opacity: 0.85;
+	}
+
+	.kd-row-l0 {
+		cursor: pointer;
+	}
+
+	.kd-row-l0 > td:not(:first-child) {
+		font-weight: 600;
+		color: var(--text-normal);
+		font-size: 12px;
+	}
+
+	.kd-row-l1 > td:first-child .kd-folder-label {
+		font-weight: 500;
+		color: var(--text-normal);
+		opacity: 0.85;
+	}
+
+	/* Collapsible children */
+	tr[data-parent] {
+		display: none;
+	}
+
+	tr[data-parent].kd-hidden {
+		display: none;
+	}
+
+	tr[data-parent]:not(.kd-hidden) {
+		display: table-row;
+	}
+
+	/* Toggle indicator */
+	.kd-toggle {
+		display: inline-block;
+		width: 1em;
+		flex-shrink: 0;
+		font-size: 10px;
+		color: var(--text-muted);
+		text-align: center;
+		transition: transform 0.15s;
+	}
+
+	.kd-table tbody tr { transition: background 0.1s; }
+	.kd-table tbody tr:hover { background: var(--bg-hover); }
+
+	.kd-count {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 24px;
+		padding: 2px 6px;
+		border-radius: var(--radius-s);
+		font-size: 11px;
+		font-weight: 600;
+		background: var(--bg-tertiary);
+		color: var(--text-normal);
+	}
+
+	.kd-row-l0 .kd-count {
+		background: var(--interactive-accent);
+		color: var(--text-on-accent);
+	}
+
+	.kd-sub-count {
+		color: var(--text-faint);
+		font-size: 11px;
+	}
+
+	.kd-bar-cell { width: 110px; min-width: 80px; }
+
+	.kd-bar-track {
+		width: 100%;
+		height: 6px;
+		border-radius: 3px;
+		background: var(--bg-modifier-border);
+		overflow: hidden;
+	}
+
+	.kd-bar-fill {
+		height: 100%;
+		border-radius: 3px;
+		background: var(--interactive-accent);
+		transition: width 0.3s ease;
+		opacity: 0.6;
+	}
+
+	.kd-row-l0 .kd-bar-fill { opacity: 1; }
+
+	/* --- Pie Chart Section --- */
+	.kd-pie-section {
+		margin-top: 16px;
+		padding-top: 12px;
+		border-top: 1px solid var(--bg-modifier-border);
+	}
+
+	.kd-pie-section h3 {
+		margin: 0 0 12px;
+		font-size: 13px;
+		font-weight: 600;
+		color: var(--text-normal);
+		letter-spacing: -0.01em;
+	}
+
+	.kd-pie-row {
+		display: flex;
+		align-items: flex-start;
+		gap: 12px;
+	}
+
+	.kd-pie-svg {
+		flex-shrink: 0;
+	}
+
+	.kd-pie-svg svg {
+		display: block;
+	}
+
+	.kd-pie-legend {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		padding-top: 4px;
+	}
+
+	.kd-legend-item {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 11px;
+		color: var(--text-muted);
+		line-height: 1.5;
+	}
+
+	.kd-legend-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		flex-shrink: 0;
+	}
+
+	/* --- Footer info --- */
+	.kd-footer {
+		margin-top: 16px;
+		padding-top: 12px;
+		border-top: 1px solid var(--bg-modifier-border);
+		font-size: 11px;
+		color: var(--text-faint);
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.kd-footer .kd-badge {
+		padding: 2px 8px;
+		border-radius: 10px;
+		background: var(--bg-tertiary);
+		font-size: 10px;
+		color: var(--text-muted);
+	}
+
+	/* Responsive */
+	@media (max-width: 900px) {
+		.sidebar-left { display: none; }
+		.dashboard-panel { width: 340px; }
+	}
+	@media (max-width: 700px) {
+		.dashboard-panel { width: 100%; border-left: none; border-top: 1px solid var(--bg-modifier-border); }
+		.page { flex-direction: column; }
+		.main-area { height: 40vh; }
+		.dashboard-panel { height: 60vh; }
+	}
+</style>
+</head>
+<body>
+<div class="page">
+	<!-- Left sidebar -->
+	<div class="sidebar-left">
+		<div class="logo">
+			<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+			My Vault
+		</div>
+		<div class="nav-item"><span class="nav-icon">🔍</span> 搜索</div>
+		<div class="nav-item"><span class="nav-icon">📜</span> 快速切换</div>
+		<div class="nav-item"><span class="nav-icon">📅</span> 日记</div>
+		<div class="nav-item"><span class="nav-icon">🔗</span> 关系图谱</div>
+		<div class="nav-item"><span class="nav-icon">📌</span> 标签</div>
+		<div class="nav-item active"><span class="nav-icon">📊</span> Dashboard</div>
+		<div class="nav-item"><span class="nav-icon">⚙️</span> 设置</div>
+	</div>
+
+	<!-- Main editor area -->
+	<div class="main-area">
+		<div class="main-header">
+			<span class="tab active">笔记示例.md</span>
+		</div>
+		<div class="main-content" style="padding:24px; color: var(--text-muted); display:flex; align-items:center; justify-content:center; font-size:13px;">
+			( 编辑器区域 — 插件看板显示在右侧面板 )
+		</div>
+	</div>
+
+	<!-- Dashboard panel (the plugin view) -->
+	<div class="dashboard-panel">
+		<div class="kd-content">
+			<div class="kd-header">
+				<h2>Knowledge Dashboard</h2>
+				<div class="kd-header-actions">
+					<button title="Refresh">↻</button>
+				</div>
+			</div>
+
+			<!-- Stats bar -->
+			<div class="kd-stats-bar">
+				<div class="kd-stat-card">
+					<span class="kd-stat-label">Total Notes</span>
+					<span class="kd-stat-value accent">487</span>
+				</div>
+				<div class="kd-stat-card">
+					<span class="kd-stat-label">L1 Folders</span>
+					<span class="kd-stat-value">7</span>
+				</div>
+				<div class="kd-stat-card">
+					<span class="kd-stat-label">L2 Folders</span>
+					<span class="kd-stat-value">23</span>
+				</div>
+			</div>
+
+			<!-- Pie Chart Section -->
+			<div class="kd-pie-section">
+				<h3>Notes 文件夹分布</h3>
+				<div class="kd-pie-row">
+					<div class="kd-pie-svg">
+						<svg viewBox="0 0 180 180" width="180" height="180">
+							<circle cx="90" cy="90" r="72" fill="none" stroke="#50C878" stroke-width="28" stroke-dasharray="147.53 452.39" stroke-dashoffset="0" transform="rotate(-90 90 90)"/>
+							<circle cx="90" cy="90" r="72" fill="none" stroke="#4A90D9" stroke-width="28" stroke-dasharray="101.64 452.39" stroke-dashoffset="-147.53" transform="rotate(-90 90 90)"/>
+							<circle cx="90" cy="90" r="72" fill="none" stroke="#F5A623" stroke-width="28" stroke-dasharray="91.79 452.39" stroke-dashoffset="-249.17" transform="rotate(-90 90 90)"/>
+							<circle cx="90" cy="90" r="72" fill="none" stroke="#E75A5A" stroke-width="28" stroke-dasharray="72.11 452.39" stroke-dashoffset="-340.96" transform="rotate(-90 90 90)"/>
+							<circle cx="90" cy="90" r="72" fill="none" stroke="#9B59B6" stroke-width="28" stroke-dasharray="39.36 452.39" stroke-dashoffset="-413.07" transform="rotate(-90 90 90)"/>
+							<text x="90" y="90" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="700" fill="currentColor">138</text>
+						</svg>
+					</div>
+					<div class="kd-pie-legend">
+						<div class="kd-legend-item"><span class="kd-legend-dot" style="background:#50C878"></span><span>Dev-Programming — 45（33%）</span></div>
+						<div class="kd-legend-item"><span class="kd-legend-dot" style="background:#4A90D9"></span><span>AI-LLM — 31（22%）</span></div>
+						<div class="kd-legend-item"><span class="kd-legend-dot" style="background:#F5A623"></span><span>Product-Design — 28（20%）</span></div>
+						<div class="kd-legend-item"><span class="kd-legend-dot" style="background:#E75A5A"></span><span>Reading-Highlights — 22（16%）</span></div>
+						<div class="kd-legend-item"><span class="kd-legend-dot" style="background:#9B59B6"></span><span>Business-Finance — 12（9%）</span></div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Table -->
+			<div class="kd-table-wrapper">
+				<table class="kd-table">
+					<thead>
+						<tr>
+							<th>Folder</th>
+							<th>Notes</th>
+							<th>Sub</th>
+							<th>Distribution</th>
+						</tr>
+					</thead>
+					<tbody>
+						<!-- Inbox -->
+						<tr class="kd-row-l0">
+							<td>
+								<div class="kd-folder-name">
+									<span class="kd-folder-icon">📁</span>
+									<span class="kd-folder-label">Inbox</span>
+								</div>
+							</td>
+							<td><span class="kd-count">42</span></td>
+							<td><span class="kd-sub-count">0</span></td>
+							<td class="kd-bar-cell">
+								<div class="kd-bar-track"><div class="kd-bar-fill" style="width:30.4%"></div></div>
+							</td>
+						</tr>
+						<!-- Notes -->
+						<tr class="kd-row-l0" data-folder="Notes">
+							<td>
+								<div class="kd-folder-name">
+									<span class="kd-toggle">▶</span>
+									<span class="kd-folder-icon">📁</span>
+									<span class="kd-folder-label">Notes</span>
+								</div>
+							</td>
+							<td><span class="kd-count">138</span></td>
+							<td><span class="kd-sub-count">5</span></td>
+							<td class="kd-bar-cell">
+								<div class="kd-bar-track"><div class="kd-bar-fill" style="width:100%"></div></div>
+							</td>
+						</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="Notes">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">AI-LLM</span></div></td>
+								<td><span class="kd-count">31</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:22.5%"></div></div></td>
+							</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="Notes">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">Dev-Programming</span></div></td>
+								<td><span class="kd-count">45</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:32.6%"></div></div></td>
+							</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="Notes">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">Product-Design</span></div></td>
+								<td><span class="kd-count">28</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:20.3%"></div></div></td>
+							</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="Notes">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">Reading-Highlights</span></div></td>
+								<td><span class="kd-count">22</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:15.9%"></div></div></td>
+							</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="Notes">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">Business-Finance</span></div></td>
+								<td><span class="kd-count">12</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:8.7%"></div></div></td>
+							</tr>
+						<!-- Ideas -->
+						<tr class="kd-row-l0" data-folder="Ideas">
+							<td>
+								<div class="kd-folder-name">
+									<span class="kd-toggle">▶</span>
+									<span class="kd-folder-icon">📁</span>
+									<span class="kd-folder-label">Ideas</span>
+								</div>
+							</td>
+							<td><span class="kd-count">56</span></td>
+							<td><span class="kd-sub-count">3</span></td>
+							<td class="kd-bar-cell">
+								<div class="kd-bar-track"><div class="kd-bar-fill" style="width:40.6%"></div></div>
+							</td>
+						</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="Ideas">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">Product-Ideas</span></div></td>
+								<td><span class="kd-count">18</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:13%"></div></div></td>
+							</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="Ideas">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">Tech-Thoughts</span></div></td>
+								<td><span class="kd-count">23</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:16.7%"></div></div></td>
+							</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="Ideas">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">Life-Reflections</span></div></td>
+								<td><span class="kd-count">15</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:10.9%"></div></div></td>
+							</tr>
+						<!-- Projects -->
+						<tr class="kd-row-l0" data-folder="Projects">
+							<td>
+								<div class="kd-folder-name">
+									<span class="kd-toggle">▶</span>
+									<span class="kd-folder-icon">📁</span>
+									<span class="kd-folder-label">Projects</span>
+								</div>
+							</td>
+							<td><span class="kd-count">87</span></td>
+							<td><span class="kd-sub-count">4</span></td>
+							<td class="kd-bar-cell">
+								<div class="kd-bar-track"><div class="kd-bar-fill" style="width:63%"></div></div>
+							</td>
+						</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="Projects">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">Obsidian-Cockpit</span></div></td>
+								<td><span class="kd-count">12</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:8.7%"></div></div></td>
+							</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="Projects">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">Design-System</span></div></td>
+								<td><span class="kd-count">34</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:24.6%"></div></div></td>
+							</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="Projects">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">Knowledge-Graph</span></div></td>
+								<td><span class="kd-count">19</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:13.8%"></div></div></td>
+							</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="Projects">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">AI-Workflow</span></div></td>
+								<td><span class="kd-count">22</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:15.9%"></div></div></td>
+							</tr>
+						<!-- wiki -->
+						<tr class="kd-row-l0" data-folder="wiki">
+							<td>
+								<div class="kd-folder-name">
+									<span class="kd-toggle">▶</span>
+									<span class="kd-folder-icon">📁</span>
+									<span class="kd-folder-label">wiki</span>
+								</div>
+							</td>
+							<td><span class="kd-count">63</span></td>
+							<td><span class="kd-sub-count">3</span></td>
+							<td class="kd-bar-cell">
+								<div class="kd-bar-track"><div class="kd-bar-fill" style="width:45.7%"></div></div>
+							</td>
+						</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="wiki">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">Tech-Terms</span></div></td>
+								<td><span class="kd-count">28</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:20.3%"></div></div></td>
+							</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="wiki">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">Design-Glossary</span></div></td>
+								<td><span class="kd-count">15</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:10.9%"></div></div></td>
+							</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="wiki">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">Business-Concepts</span></div></td>
+								<td><span class="kd-count">20</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:14.5%"></div></div></td>
+							</tr>
+						<!-- Template -->
+						<tr class="kd-row-l0" data-folder="Template">
+							<td>
+								<div class="kd-folder-name">
+									<span class="kd-toggle">▶</span>
+									<span class="kd-folder-icon">📁</span>
+									<span class="kd-folder-label">Template</span>
+								</div>
+							</td>
+							<td><span class="kd-count">18</span></td>
+							<td><span class="kd-sub-count">2</span></td>
+							<td class="kd-bar-cell">
+								<div class="kd-bar-track"><div class="kd-bar-fill" style="width:13%"></div></div>
+							</td>
+						</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="Template">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">Daily-Note</span></div></td>
+								<td><span class="kd-count">6</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:4.3%"></div></div></td>
+							</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="Template">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">Project-Template</span></div></td>
+								<td><span class="kd-count">12</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:8.7%"></div></div></td>
+							</tr>
+						<!-- Logs -->
+						<tr class="kd-row-l0" data-folder="Logs">
+							<td>
+								<div class="kd-folder-name">
+									<span class="kd-toggle">▶</span>
+									<span class="kd-folder-icon">📁</span>
+									<span class="kd-folder-label">Logs</span>
+								</div>
+							</td>
+							<td><span class="kd-count">83</span></td>
+							<td><span class="kd-sub-count">4</span></td>
+							<td class="kd-bar-cell">
+								<div class="kd-bar-track"><div class="kd-bar-fill" style="width:60.1%"></div></div>
+							</td>
+						</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="Logs">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">LLM-Logs</span></div></td>
+								<td><span class="kd-count">35</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:25.4%"></div></div></td>
+							</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="Logs">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">Tag-Registry</span></div></td>
+								<td><span class="kd-count">18</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:13%"></div></div></td>
+							</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="Logs">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">Link-Registry</span></div></td>
+								<td><span class="kd-count">14</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:10.1%"></div></div></td>
+							</tr>
+							<tr class="kd-row-l1 kd-hidden" data-parent="Logs">
+								<td><div class="kd-folder-name"><span class="kd-indent"></span><span class="kd-folder-icon">📂</span><span class="kd-folder-label">Fix-List</span></div></td>
+								<td><span class="kd-count">16</span></td>
+								<td><span class="kd-sub-count">0</span></td>
+								<td class="kd-bar-cell"><div class="kd-bar-track"><div class="kd-bar-fill" style="width:11.6%"></div></div></td>
+							</tr>
+					</tbody>
+				</table>
+			</div>
+
+			<!-- Footer -->
+			<div class="kd-footer">
+				<span>Auto-refresh on file changes</span>
+				<span class="kd-badge">v1.1.0</span>
+			</div>
+		</div>
+</div>
+</div>
+<script>
+(function() {
+	// 恢复持久化的展开状态
+	var saved = localStorage.getItem("kd-expanded");
+	if (saved) {
+		try {
+			var paths = JSON.parse(saved);
+			paths.forEach(function(path) {
+				var trs = document.querySelectorAll('tr[data-folder="' + path + '"]');
+				trs.forEach(function(tr) {
+					tr.classList.add("kd-expanded");
+					var toggle = tr.querySelector(".kd-toggle");
+					if (toggle) toggle.textContent = "▼";
+					var children = document.querySelectorAll('tr[data-parent="' + path + '"]');
+					children.forEach(function(child) {
+						child.classList.remove("kd-hidden");
+					});
+				});
+			});
+		} catch (e) {}
+	}
+
+	document.querySelectorAll(".kd-row-l0[data-folder]").forEach(function(tr) {
+		tr.addEventListener("click", function() {
+			var parent = this.dataset.folder;
+			var children = document.querySelectorAll('tr[data-parent="' + parent + '"]');
+			var expanded = this.classList.toggle("kd-expanded");
+			children.forEach(function(child) {
+				child.classList.toggle("kd-hidden", !expanded);
+			});
+			var toggle = this.querySelector(".kd-toggle");
+			if (toggle) toggle.textContent = expanded ? "▼" : "▶";
+			// 持久化展开状态
+			try {
+				var paths = JSON.parse(localStorage.getItem("kd-expanded") || "[]");
+				if (expanded) {
+					if (!paths.includes(parent)) paths.push(parent);
+				} else {
+					paths = paths.filter(function(p) { return p !== parent; });
+				}
+				localStorage.setItem("kd-expanded", JSON.stringify(paths));
+			} catch (e) {}
+		});
+	});
+})();
+</script>
+</body>
+</html>

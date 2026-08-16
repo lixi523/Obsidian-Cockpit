@@ -1,0 +1,384 @@
+/* ============================================================
+   Knowledge Dashboard — styles.css
+   Designed for Obsidian sidebar panel view
+   ============================================================ */
+
+/* --- Header --- */
+.kd-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 1.25em;
+	padding-bottom: 0.75em;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.kd-header h2 {
+	margin: 0;
+	font-size: 1.15em;
+	font-weight: 700;
+	letter-spacing: -0.01em;
+	color: var(--text-normal);
+}
+
+.kd-header-actions {
+	display: flex;
+	gap: 0.25em;
+}
+
+.kd-header-actions button {
+	--button-size: 26px;
+	width: var(--button-size);
+	height: var(--button-size);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border-radius: var(--radius-s);
+	background: transparent;
+	border: 1px solid transparent;
+	color: var(--text-muted);
+	cursor: pointer;
+	font-size: 1em;
+	transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.kd-header-actions button:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+	border-color: var(--background-modifier-border);
+}
+
+/* --- Stats Summary Bar --- */
+.kd-stats-bar {
+	display: flex;
+	gap: 0.5em;
+	flex-wrap: wrap;
+	margin-bottom: 1.25em;
+}
+
+.kd-stat-card {
+	flex: 1;
+	min-width: 100px;
+	padding: 0.65em 0.85em;
+	border-radius: var(--radius-m);
+	background: var(--background-modifier-border);
+	border: 1px solid transparent;
+	transition: border-color 0.15s;
+}
+
+.kd-stat-card:hover {
+	border-color: var(--interactive-accent);
+}
+
+.kd-stat-label {
+	display: block;
+	font-size: 0.72em;
+	font-weight: 500;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--text-faint);
+	margin-bottom: 0.2em;
+}
+
+.kd-stat-value {
+	display: block;
+	font-size: 1.5em;
+	font-weight: 700;
+	line-height: 1.1;
+	font-variant-numeric: tabular-nums;
+	color: var(--text-normal);
+}
+
+.kd-stat-value.accent {
+	color: var(--interactive-accent);
+}
+
+/* --- Folder Tree Table --- */
+.kd-table-wrapper {
+	overflow-x: auto;
+}
+
+.kd-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.92em;
+}
+
+.kd-table th {
+	text-align: left;
+	padding: 0.55em 0.75em;
+	border-bottom: 2px solid var(--background-modifier-border);
+	color: var(--text-muted);
+	font-size: 0.75em;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	white-space: nowrap;
+	user-select: none;
+}
+
+.kd-table th:not(:first-child) {
+	text-align: right;
+}
+
+.kd-table td {
+	padding: 0.5em 0.75em;
+	border-bottom: 1px solid var(--background-modifier-border-hover, var(--background-modifier-border));
+	vertical-align: middle;
+}
+
+.kd-table td:not(:first-child) {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+	color: var(--text-muted);
+}
+
+/* Folder name cell */
+.kd-folder-name {
+	display: flex;
+	align-items: center;
+	gap: 0.4em;
+	white-space: nowrap;
+}
+
+.kd-folder-icon {
+	flex-shrink: 0;
+	font-size: 1em;
+	opacity: 0.65;
+}
+
+.kd-folder-label {
+	flex: 1;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+/* Indent for sub-folders */
+.kd-indent {
+	display: inline-block;
+	width: 1.4em;
+	flex-shrink: 0;
+}
+
+/* Row depth styles */
+.kd-row-l0 > td:first-child .kd-folder-label {
+	font-weight: 700;
+	font-size: 1em;
+	color: var(--text-normal);
+}
+
+.kd-row-l0 > td:first-child .kd-folder-icon {
+	font-size: 1.05em;
+	opacity: 0.85;
+}
+
+.kd-row-l0 {
+	cursor: pointer;
+}
+
+.kd-row-l0 > td:not(:first-child) {
+	font-weight: 600;
+	color: var(--text-normal);
+	font-size: 0.95em;
+}
+
+.kd-row-l1 > td:first-child .kd-folder-label {
+	font-weight: 500;
+	color: var(--text-normal);
+}
+
+/* Collapsible children */
+tr[data-parent] {
+	display: none;
+}
+
+tr[data-parent].kd-hidden {
+	display: none;
+}
+
+tr[data-parent]:not(.kd-hidden) {
+	display: table-row;
+}
+
+/* Toggle indicator */
+.kd-toggle {
+	display: inline-block;
+	width: 1em;
+	flex-shrink: 0;
+	font-size: 0.65em;
+	color: var(--text-muted);
+	text-align: center;
+	transition: transform 0.15s;
+}
+
+/* Row hover */
+.kd-table tbody tr {
+	transition: background 0.1s;
+}
+
+.kd-table tbody tr:hover {
+	background: var(--background-modifier-hover);
+}
+
+/* Note count badge */
+.kd-count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.6em;
+	padding: 0.1em 0.4em;
+	border-radius: var(--radius-s);
+	font-size: 0.85em;
+	font-weight: 600;
+	background: var(--background-modifier-border);
+	color: var(--text-normal);
+}
+
+.kd-row-l0 .kd-count {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+/* Sub-folder count */
+.kd-sub-count {
+	color: var(--text-faint);
+	font-size: 0.85em;
+}
+
+/* --- Bar visualization --- */
+.kd-bar-cell {
+	width: 120px;
+	min-width: 80px;
+}
+
+.kd-bar-track {
+	width: 100%;
+	height: 6px;
+	border-radius: 3px;
+	background: var(--background-modifier-border);
+	overflow: hidden;
+}
+
+.kd-bar-fill {
+	height: 100%;
+	border-radius: 3px;
+	background: var(--interactive-accent);
+	transition: width 0.3s ease;
+	opacity: 0.7;
+}
+
+.kd-row-l0 .kd-bar-fill {
+	opacity: 1;
+}
+
+/* --- Empty state --- */
+.kd-empty {
+	text-align: center;
+	padding: 3em 1em;
+	color: var(--text-faint);
+}
+
+.kd-empty-icon {
+	font-size: 2em;
+	margin-bottom: 0.5em;
+	opacity: 0.5;
+}
+
+/* --- Scrollbar (thin, subtle) --- */
+.kd-content {
+	padding: 1em;
+	overflow-y: auto;
+}
+
+/* --- Dark mode tweaks --- */
+.theme-dark .kd-stat-card {
+	background: var(--background-secondary);
+}
+
+.theme-dark .kd-count {
+	background: var(--background-secondary-alt, var(--background-modifier-border));
+}
+
+.theme-dark .kd-row-l0 .kd-count {
+	background: var(--interactive-accent);
+}
+
+/* --- Pie Chart Section --- */
+.kd-pie-section {
+	margin-top: 1.5em;
+	padding-top: 1em;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.kd-pie-section h3 {
+	margin: 0 0 0.75em;
+	font-size: 0.95em;
+	font-weight: 600;
+	color: var(--text-normal);
+	letter-spacing: -0.01em;
+}
+
+.kd-pie-row {
+	display: flex;
+	align-items: flex-start;
+	gap: 1em;
+}
+
+.kd-pie-svg {
+	flex-shrink: 0;
+}
+
+.kd-pie-svg svg {
+	display: block;
+}
+
+.kd-pie-legend {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.35em;
+	padding-top: 0.25em;
+}
+
+.kd-legend-item {
+	display: flex;
+	align-items: center;
+	gap: 0.4em;
+	font-size: 0.82em;
+	color: var(--text-muted);
+	line-height: 1.4;
+}
+
+.kd-legend-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+/* --- Responsive: narrow sidebar --- */
+@media (max-width: 400px) {
+	.kd-stats-bar {
+		gap: 0.35em;
+	}
+
+	.kd-stat-card {
+		min-width: 80px;
+		padding: 0.5em 0.65em;
+	}
+
+	.kd-stat-value {
+		font-size: 1.25em;
+	}
+
+	.kd-bar-cell {
+		display: none;
+	}
+
+	.kd-pie-row {
+		flex-direction: column;
+		align-items: center;
+	}
+}
